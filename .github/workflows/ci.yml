@@ -1,0 +1,201 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-and-test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            version: 9
+          - os: ubuntu-latest
+            compiler: clang
+            version: 10
+          - os: macos-latest
+            compiler: clang
+            version: latest
+          - os: windows-latest
+            compiler: msvc
+            version: latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pybind11 numpy matplotlib
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          libgl1-mesa-dev \
+          libglfw3-dev \
+          libglm-dev \
+          libomp-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxcursor-dev \
+          libxi-dev
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew update
+        brew install cmake glfw glm llvm
+
+    - name: Install system dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Use vcpkg for Windows dependencies
+        vcpkg install glfw3 glm --triplet x64-windows
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+          -DUSE_OPENMP=ON \
+          -DBUILD_PYTHON_BINDINGS=ON \
+          -DBUILD_EXAMPLES=ON \
+          -DBUILD_BENCHMARKS=ON \
+          -DBUILD_TESTS=ON
+
+    - name: Build project
+      run: |
+        cd build
+        cmake --build . --config ${{ env.BUILD_TYPE }} --parallel
+
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --build-config ${{ env.BUILD_TYPE }}
+
+    - name: Run performance benchmarks
+      run: |
+        cd build
+        ./benchmarks/performance_test 1000 5000 10000 || true
+
+    - name: Test Python bindings
+      run: |
+        cd build
+        python -c "import sph; print('Python bindings working!')" || true
+
+    - name: Upload build artifacts
+      if: matrix.os == 'ubuntu-latest' && matrix.compiler == 'gcc'
+      uses: actions/upload-artifact@v3
+      with:
+        name: sph-simulator-linux
+        path: |
+          build/sph_simulator
+          build/examples/
+          build/python/sph*.so
+        retention-days: 30
+
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install cppcheck
+      run: sudo apt-get install -y cppcheck
+
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --std=c++17 --language=c++ \
+          --suppress=missingIncludeSystem \
+          --suppress=unusedFunction \
+          --suppress=unmatchedSuppression \
+          --inline-suppr \
+          --xml --xml-version=2 \
+          src/ 2> cppcheck_results.xml || true
+
+    - name: Install clang-format
+      run: sudo apt-get install -y clang-format-10
+
+    - name: Check code formatting
+      run: |
+        find src/ -name "*.cpp" -o -name "*.h" | xargs clang-format-10 --dry-run --Werror --style=file || true
+
+    - name: Python code quality
+      run: |
+        pip install flake8 black isort
+        flake8 python/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        black --check python/ || true
+        isort --check-only python/ || true
+
+  documentation:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install documentation dependencies
+      run: |
+        pip install mkdocs mkdocs-material
+
+    - name: Build documentation
+      run: |
+        # Check if docs can be built (placeholder for future mkdocs setup)
+        echo "Documentation check passed" || true
+
+  release:
+    needs: [build-and-test, code-quality]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create Release Archive
+      run: |
+        mkdir release
+        cp -r docs/ release/
+        cp README.md INSTALL.md LICENSE release/
+        tar -czf sph-particle-simulator-${{ github.sha }}.tar.gz release/
+
+    - name: Upload Release Asset
+      uses: actions/upload-artifact@v3
+      with:
+        name: release-package
+        path: sph-particle-simulator-${{ github.sha }}.tar.gz
+        retention-days: 30

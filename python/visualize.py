@@ -6,12 +6,14 @@ This script demonstrates how to use the SPH simulator from Python
 for scientific computing and visualization.
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.animation as animation
-import sph  # Our C++ module
 import time
+
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import numpy as np
+import sph  # Our C++ module
+from mpl_toolkits.mplot3d import Axes3D
+
 
 class SPHVisualizer:
     def __init__(self, simulator):

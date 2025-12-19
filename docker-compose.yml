@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  sph-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sph-simulator
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./examples:/app/examples
+    environment:
+      - DISPLAY=${DISPLAY}
+      - PYTHONPATH=/app/build/python:$PYTHONPATH
+    # Uncomment for GUI support (requires X11 forwarding)
+    # devices:
+    #   - /dev/dri:/dev/dri
+    # network_mode: host
+    command: ["/bin/bash"]
+
+  sph-notebook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sph-notebook
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+      - ./output:/app/output
+    environment:
+      - PYTHONPATH=/app/build/python:$PYTHONPATH
+    command: ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
+
+  sph-benchmark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sph-benchmark
+    volumes:
+      - ./benchmarks:/app/benchmarks
+      - ./output:/app/output
+    environment:
+      - OMP_NUM_THREADS=4
+    command: ["./build/benchmarks/performance_test", "10000", "50000", "100000"]
+
+# Optional: GPU-enabled service (requires NVIDIA Docker)
+# services:
+#   sph-gpu:
+#     build:
+#       context: .
+#       dockerfile: Dockerfile.cuda
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: 1
+#               capabilities: [gpu]
