@@ -277,3 +277,4 @@ Contributors will be recognized in:
 - Academic citations (if applicable)
 
 Thank you for contributing to the SPH Particle Simulator! 🚀
+

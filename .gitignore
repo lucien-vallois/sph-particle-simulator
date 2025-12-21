@@ -1,25 +1,7 @@
 # Build directories
 build/
-build_test/
 cmake-build-*/
-CMakeFiles/
-
-# Compiled binaries
-*.exe
-*.out
-*.o
-*.so
-*.dylib
-*.dll
-
-# CMake generated files
-CMakeCache.txt
-CMakeLists.txt.user
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
+out/
 
 # IDE files
 .vscode/
@@ -28,39 +10,78 @@ _deps
 *.swo
 *~
 
-# OS generated files
+# OS files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Data files
-*.csv
-*.npz
-*.vtk
-*.h5
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.obj
 
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
 env/
 venv/
-ENV/
-env.bak/
-venv.bak/
+.venv/
 
 # Temporary files
 *.tmp
 *.bak
 *.log
 
-# Documentation build
-docs/_build/
-*.pdf
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
 
+# Visual Studio
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+*.suo
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.tmp
+*.tmp_proj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.log
+*.svclog
+*.scc
+
+# Qt
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+Makefile*
+*build-*

@@ -94,3 +94,4 @@ CMD ["/bin/bash"]
 # CMD ["./build/examples/dam_break", "10000"]      # Run dam break example
 # CMD ["python3", "python/visualize.py"]           # Run Python visualization
 # CMD ["jupyter", "notebook", "--ip=0.0.0.0", "--port=8888", "--no-browser"]  # Jupyter notebook
+
